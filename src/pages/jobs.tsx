@@ -1,13 +1,36 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import NavBar from '@/components/NavBar';
+import { useEffect, useState } from 'react';
+
+type Job = {
+    id: string;
+    title: string;
+    company: { display_name: string };
+    location: { display_name: string };
+    description: string;
+    redirect_url: string;
+  };
+
 export default function Jobs() {
-  // This will be replaced later with fetched jobs
-  const jobs = [
-    { id: 1, title: 'Frontend Developer', company: 'TechCorp' },
-    { id: 2, title: 'Backend Developer', company: 'DataWorks' },
-    { id: 3, title: 'Full Stack Engineer', company: 'CodeBridge' },
-  ];
+ const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await fetch('/api/jobs');
+        const data = await res.json();
+        setJobs(data.results); // Adzuna'da "results" array'i gelir
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  if (loading) return <p className="text-center mt-10">Loading jobs...</p>;
 
   return (
     <>
@@ -16,21 +39,21 @@ export default function Jobs() {
       </Head>
 
       <NavBar />
-      <main className="min-h-screen px-4 py-8 bg-white">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Available Jobs</h1>
-
-        <div className="max-w-3xl mx-auto space-y-4">
-          {jobs.map((job) => (
-            <div key={job.id} className="p-4 border rounded-lg shadow-sm hover:shadow-md transition">
-              <h2 className="text-xl font-semibold text-blue-700">{job.title}</h2>
-              <p className="text-gray-600">{job.company}</p>
-              <Link href={`/jobs/${job.id}`} className="text-sm text-blue-500 hover:underline mt-2 inline-block">
-                View details
-              </Link>
-            </div>
-          ))}
-        </div>
-      </main>
+      <div className="p-8 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Latest Jobs</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {jobs.map((job) => (
+          <div key={job.id} className="bg-white p-6 rounded-lg shadow hover:shadow-md transition">
+            <h2 className="text-xl font-semibold text-gray-800">{job.title}</h2>
+            <p className="text-sm text-gray-600">{job.company.display_name} - {job.location.display_name}</p>
+            <p className="text-sm text-gray-700 mt-2 line-clamp-3">{job.description}</p>
+            <a href={job.redirect_url} target="_blank" rel="noopener noreferrer" className="inline-block mt-4 text-blue-600 hover:underline">
+              View Job →
+            </a>
+          </div>
+        ))}
+      </div>
+    </div>
     </>
   );
 }
